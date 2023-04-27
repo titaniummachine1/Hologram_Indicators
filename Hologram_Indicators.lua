@@ -70,7 +70,7 @@ local function draw_handler()
     local upoffset = -50
     local upoffset2 = -25
     local width = 100
-    local height = 50
+    local height = 40
     
     local input_offsetY = 0
     local input_offsetX = 0
@@ -203,7 +203,7 @@ local function draw_handler()
                         input_offsetX = 0
                         -- Draw the text inside the box
                         if DPS ~= nil then
-                            draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text1)
+                            draw.Text(math.floor(textX - input_offsetX - 10), math.floor(textY - input_offsetY), text1)
                         end
 
                 end
