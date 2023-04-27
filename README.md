@@ -7,4 +7,8 @@ draws indicators on players site with their information
 [![Download Latest](https://img.shields.io/github/downloads/titaniummachine1/Hologram_Indicators/total.svg?style=for-the-badge&logo=download&label=Download%20Latest)](https://github.com/titaniummachine1/Hologram_Indicators/releases/latest/download/Hologram_Indicators.lua)
 
 
+
+https://user-images.githubusercontent.com/78664175/234865975-62d0935c-664e-453e-94df-d87c7c9ee497.mp4
+
+
 ![image](https://user-images.githubusercontent.com/78664175/234865521-c9d9dff0-f966-4e56-b632-f18568873049.png)
