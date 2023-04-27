@@ -73,6 +73,9 @@ local function draw_handler()
     local width = 100
     local height = 100
     
+    local input_offsetY = 0
+    local input_offsetX = 0
+
     local CurrentValue
     local Maxvalue
 
@@ -117,9 +120,7 @@ local function draw_handler()
                     draw.Color(255, 255, 255, 255)
                     draw.OutlinedRect(math.floor(boxX), math.floor(boxY), math.floor(boxX + boxWidth), math.floor(boxY + boxHeight))
 
-                    -- Set the font to use and color for text to white
-                    draw.SetFont(myfont)
-                    draw.Color(255, 255, 255, 255)
+
 
                     -- Calculate the percentage of health remaining
                     local percentage = CurrentValue / Maxvalue * 100
@@ -154,12 +155,18 @@ local function draw_handler()
                             draw.Color(math.floor(-percentage), 0, 0, 255)
                         end
                     draw.FilledRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth * CurrentValue / Maxvalue), math.floor(boxY + boxHeight + 7))
-                    draw.Text(math.floor(textX), math.floor(textY), text)
+                    input_offsetY = 0
+                    input_offsetX = 0
+                    draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text)
 
+                    -- Set the font to use and color for text to white
+                    draw.SetFont(myfont)
                     draw.Color(255, 255, 255, 255)
+                    input_offsetY = 20
+                    input_offsetX = 0
                     -- Draw the text inside the box
                     if DPS ~= nil then
-                        draw.Text(math.floor(textX), math.floor(textY - 20), text1)
+                        draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text1)
                     end
                        
                     
