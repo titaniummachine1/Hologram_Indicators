@@ -9,7 +9,7 @@ local floor = math.floor
 local x, y = draw.GetScreenSize()
 local font_calibri = draw.CreateFont("Calibri", 18, 18)
 
-local victim_entity
+local victim
 local attacker
 local localplayer
 local damage
@@ -17,41 +17,51 @@ local iscrit
 local health
 local ping
 local DPS
+local time_diff
 
 local player_damage = {} -- table to store damage per player
 local last_tick = globals.TickCount() -- initialize the last tick count
+
 local function event_hook(ev)
     if ev:GetName() ~= "player_hurt" then return end -- only allows player_hurt event go through
-    local victim = entities.GetByUserID(ev:GetInt("userid"))
+    victim = entities.GetByUserID(ev:GetInt("userid"))
     attacker = entities.GetByUserID(ev:GetInt("attacker"))
     damage = ev:GetInt("damageamount")
-    local is_crit = ev:GetString("crit") == 1 and true or false
+    iscrit = ev:GetString("crit") == 1 and true or false
     health = ev:GetInt("health")
     ping = entities.GetPlayerResources():GetPropDataTableInt("m_iPing")[victim:GetIndex()]
 
-    if last_real_time == nil then
-        last_real_time = 0
-    end
-    -- calculate damage per second for the attacker
-    if attacker:IsPlayer() and victim:IsPlayer() and attacker:GetTeamNumber() ~= victim:GetTeamNumber() then
-        local tick = globals.TickCount()
-        if tick > last_tick then -- if one tick has passed
-            local time_diff = globals.RealTime() - last_real_time -- calculate time difference since last tick
-            last_real_time = globals.RealTime() -- update last real time
-            for _, player in pairs(player_damage) do -- iterate over all players
-                player.dps = player.damage / time_diff -- calculate damage per second
-                player.damage = 0 -- reset damage
-                --print("Current DPS for player ", player.index, ": ", player.dps) -- print current DPS
-                DPS = math.floor(player.dps)
-            end
-            last_tick = tick -- update last tick
-        end
-        if not player_damage[attacker:GetIndex()] then
-            player_damage[attacker:GetIndex()] = { dps = 0, damage = 0, index = attacker:GetIndex() } -- initialize damage table for new players
-        end
-        player_damage[attacker:GetIndex()].damage = player_damage[attacker:GetIndex()].damage + damage -- add damage to total
-    end
 end
+
+local last_real_time = 0
+
+local damage_queue = {}
+-- ent_fire !picker Addoutput "health 99"
+local function calculate_dps(attacker, victim, damage)
+    if attacker == nil or victim == nil or attacker:GetTeamNumber() == victim:GetTeamNumber() then return end
+    
+    local current_time = globals.RealTime()
+    table.insert(damage_queue, {time = current_time, damage = damage})
+    
+    -- Remove any damage from the queue that is older than 0.5 seconds
+    while #damage_queue > 0 and current_time - damage_queue[1].time > 0.5 do
+        table.remove(damage_queue, 1)
+    end
+    
+    local total_damage = 0
+    for _, entry in ipairs(damage_queue) do
+        total_damage = total_damage + entry.damage
+    end
+    
+    -- calculate damage per second
+    time_diff = math.max(current_time - damage_queue[1].time, 0.01) -- avoid divide by zero errors
+    local player_dps = total_damage / time_diff
+    
+    --print("Current DPS for player ", attacker:GetIndex(), ": ", player_dps) -- print current DPS
+    
+    return math.floor(player_dps)
+end
+
 
 
 
@@ -100,8 +110,6 @@ local function draw_handler()
                 local enemyScreenPos = client.WorldToScreen(enemyMidpoint)
 
 
-                draw.Text( 500, 540, "pitch ".. tostring(DPS) )
-
                 if enemyScreenPos ~= nil then
                     local boxWidth = width
                     local boxHeight = height
@@ -130,7 +138,9 @@ local function draw_handler()
 
                     -- Add the percent symbol to the string
                     local text = tostring(percent) .. " %"
+                    calculate_dps(pLocal)
                     local text1 = tostring(DPS) .. " DPS"
+                
                     -- Get the width and height of the text
                     local textWidth, textHeight = draw.GetTextSize(text)
 
@@ -152,9 +162,43 @@ local function draw_handler()
                             draw.Color(0, 255, 0, 255)
                         else
                             -- Health is below 50%, set the color to red
-                            draw.Color(math.floor(-percentage), 0, 0, 255)
+                            draw.Color(255, 0, 0, 255)
                         end
-                    draw.FilledRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth * CurrentValue / Maxvalue), math.floor(boxY + boxHeight + 7))
+
+                        local CurrentValue2 = CurrentValue
+
+                        if CurrentValue > Maxvalue then
+                            while CurrentValue2 > Maxvalue do
+                                CurrentValue2 = CurrentValue2 - Maxvalue
+                            end
+                        end
+
+                        local dodraw1 = false
+
+                        if percentage <= 200 and percentage > 100 then
+                            draw.Color(0, 255, 0, 255) -- green
+                            dodraw1 = true
+                        elseif percentage >= 200 then
+                            draw.Color(255, 255, 0, 255) -- yellow
+                            dodraw1 = true
+                        else
+                            draw.Color(0, 255, 0, 255) -- green
+                            dodraw1 = false
+                        end
+                        if dodraw1 == true then draw.FilledRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth), math.floor(boxY + boxHeight + 7)) end
+
+                        if percentage <= 200 and percentage > 100 then
+                            draw.Color(0, 255, 255, 255)
+                        elseif percentage >= 200 then
+                            draw.Color(0, 255, 255, 255)
+                        else
+                            draw.Color(0, 255, 0, 255)
+                        end
+                        draw.FilledRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth * CurrentValue2 / Maxvalue), math.floor(boxY + boxHeight + 7))
+
+                        
+                        
+
                     input_offsetY = 0
                     input_offsetX = 0
                     draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text)
@@ -164,6 +208,7 @@ local function draw_handler()
                     draw.Color(255, 255, 255, 255)
                     input_offsetY = 20
                     input_offsetX = 0
+
                     -- Draw the text inside the box
                     if DPS ~= nil then
                         draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text1)
