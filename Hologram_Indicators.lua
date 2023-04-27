@@ -16,11 +16,8 @@ local damage
 local iscrit
 local health
 local ping
-local DPS
-local time_diff
+local dps = 0
 
-local player_damage = {} -- table to store damage per player
-local last_tick = globals.TickCount() -- initialize the last tick count
 
 local function event_hook(ev)
     if ev:GetName() ~= "player_hurt" then return end -- only allows player_hurt event go through
@@ -30,40 +27,32 @@ local function event_hook(ev)
     iscrit = ev:GetString("crit") == 1 and true or false
     health = ev:GetInt("health")
     ping = entities.GetPlayerResources():GetPropDataTableInt("m_iPing")[victim:GetIndex()]
-
 end
 
-local last_real_time = 0
-
+local last_tick = globals.TickCount()
 local damage_queue = {}
--- ent_fire !picker Addoutput "health 99"
-local function calculate_dps(attacker, victim, damage)
-    if attacker == nil or victim == nil or attacker:GetTeamNumber() == victim:GetTeamNumber() then return end
     
-    local current_time = globals.RealTime()
-    table.insert(damage_queue, {time = current_time, damage = damage})
-    
-    -- Remove any damage from the queue that is older than 0.5 seconds
-    while #damage_queue > 0 and current_time - damage_queue[1].time > 0.5 do
-        table.remove(damage_queue, 1)
-    end
-    
-    local total_damage = 0
-    for _, entry in ipairs(damage_queue) do
-        total_damage = total_damage + entry.damage
-    end
-    
-    -- calculate damage per second
-    time_diff = math.max(current_time - damage_queue[1].time, 0.01) -- avoid divide by zero errors
-    local player_dps = total_damage / time_diff
-    
-    --print("Current DPS for player ", attacker:GetIndex(), ": ", player_dps) -- print current DPS
-    
-    return math.floor(player_dps)
+    local function OnCreateMove()
+        local current_tick = globals.TickCount()
+        local tick_diff = current_tick - last_tick
+        if #damage_queue >= 66 then
+            table.remove(damage_queue, 1)
+        end
+        if damage == nil then
+            damage = 0
+        end
+        table.insert(damage_queue, damage)
+        if tick_diff >= 1 then
+            last_tick = current_tick
+            local total_damage = 0
+            for _, dmg in ipairs(damage_queue) do
+                total_damage = total_damage + dmg
+            end
+            dps = total_damage / tick_diff
+            print("Current DPS: ", dps)
+        end
+        damage = 0 -- reset damage to 0 at the end of each call 
 end
-
-
-
 
 
 local myfont = draw.CreateFont( "Verdana", 16, 800 )
@@ -81,7 +70,7 @@ local function draw_handler()
     local upoffset = -50
     local upoffset2 = -25
     local width = 100
-    local height = 100
+    local height = 50
     
     local input_offsetY = 0
     local input_offsetX = 0
@@ -95,6 +84,8 @@ local function draw_handler()
             if screenPos ~= nil then
                 local pLocalPos = pLocal:GetAbsOrigin()
                 local distance = (pLocalPos - p:GetAbsOrigin()):Length()
+                if distance > 500 then goto continue end
+
                 local scale = math.max(0.2, math.min(1, 1000 / distance))
                 local heightOffset = 50 + (p:GetAbsOrigin().z - pLocalPos.z) * scale
                 width = width * scale
@@ -138,7 +129,7 @@ local function draw_handler()
 
                     -- Add the percent symbol to the string
                     local text = tostring(percent) .. " %"
-                    calculate_dps(pLocal)
+                    
                     local text1 = tostring(DPS) .. " DPS"
                 
                     -- Get the width and height of the text
@@ -154,7 +145,7 @@ local function draw_handler()
 
                     -- Draw an outline around the health bar
                     draw.Color(255, 255, 255, 255)
-                    draw.OutlinedRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth), math.floor(boxY + boxHeight + 7))
+                    draw.OutlinedRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth), math.floor(boxY + boxHeight + 8))
                     -- Fill the health bar with a color based on how much health the player has remaining
                                             -- Change the color of the health bar based on the percentage of health remaining
                         if percentage >= 50 then
@@ -185,7 +176,7 @@ local function draw_handler()
                             draw.Color(0, 255, 0, 255) -- green
                             dodraw1 = false
                         end
-                        if dodraw1 == true then draw.FilledRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth), math.floor(boxY + boxHeight + 7)) end
+                        if dodraw1 == true then draw.FilledRect(math.floor(boxX + 1), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth - 1), math.floor(boxY + boxHeight + 7)) end
 
                         if percentage <= 200 and percentage > 100 then
                             draw.Color(0, 255, 255, 255)
@@ -196,42 +187,32 @@ local function draw_handler()
                         else
                             draw.Color(255, 0, 0, 255) -- Red
                         end
-                        draw.FilledRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth * CurrentValue2 / Maxvalue), math.floor(boxY + boxHeight + 7))
+                        draw.FilledRect(math.floor(boxX + 1), math.floor(boxY + boxHeight), math.floor(boxX - 1 + boxWidth * CurrentValue2 / Maxvalue), math.floor(boxY + boxHeight + 7))
 
                         
                         
 
-                    input_offsetY = 0
-                    input_offsetX = 0
-                    draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text)
-
-                    -- Set the font to use and color for text to white
-                    draw.SetFont(myfont)
-                    draw.Color(255, 255, 255, 255)
-                    input_offsetY = 20
-                    input_offsetX = 0
-
-                    -- Draw the text inside the box
-                    if DPS ~= nil then
-                        draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text1)
-                    end
-                       
-                    
-                    
-                    
+                        input_offsetY = -10
+                        input_offsetX = 0
+                        draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text)
+    
+                        -- Set the font to use and color for text to white
+                        draw.SetFont(myfont)
+                        draw.Color(255, 255, 255, 255)
+                        input_offsetY = 10
+                        input_offsetX = 0
+                        -- Draw the text inside the box
+                        if DPS ~= nil then
+                            draw.Text(math.floor(textX - input_offsetX), math.floor(textY - input_offsetY), text1)
+                        end
 
                 end
+                ::continue::
             end
         end
     end
-    
-    
-    
-    
-    
-    
-    
 end
 
+callbacks.Register("CreateMove", "MCT_CreateMove", OnCreateMove)             -- Register the "CreateMove" callback
 callbacks.Register("Draw", "unique_draw_hook", draw_handler)
 callbacks.Register("FireGameEvent", "unique_event_hook", event_hook)
