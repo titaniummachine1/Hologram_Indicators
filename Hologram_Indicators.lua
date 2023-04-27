@@ -139,7 +139,13 @@ local function draw_handler()
 
                    
    
-                        -- Change the color of the health bar based on the percentage of health remaining
+
+
+                    -- Draw an outline around the health bar
+                    draw.Color(255, 255, 255, 255)
+                    draw.OutlinedRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth), math.floor(boxY + boxHeight + 7))
+                    -- Fill the health bar with a color based on how much health the player has remaining
+                                            -- Change the color of the health bar based on the percentage of health remaining
                         if percentage >= 50 then
                             -- Health is above or equal to 50%, set the color to green
                             draw.Color(0, 255, 0, 255)
@@ -147,18 +153,15 @@ local function draw_handler()
                             -- Health is below 50%, set the color to red
                             draw.Color(math.floor(-percentage), 0, 0, 255)
                         end
-
-                    -- Draw an outline around the health bar
-                    draw.Color(255, 255, 255, 255)
-                    draw.OutlinedRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth), math.floor(boxY + boxHeight + 7))
-                    -- Fill the health bar with a color based on how much health the player has remaining
                     draw.FilledRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth * CurrentValue / Maxvalue), math.floor(boxY + boxHeight + 7))
+                    draw.Text(math.floor(textX), math.floor(textY), text)
 
+                    draw.Color(255, 255, 255, 255)
                     -- Draw the text inside the box
                     if DPS ~= nil then
                         draw.Text(math.floor(textX), math.floor(textY - 20), text1)
                     end
-                        draw.Text(math.floor(textX), math.floor(textY), text)
+                       
                     
                     
                     
