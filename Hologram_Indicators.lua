@@ -175,7 +175,7 @@ local function draw_handler()
 
                         local dodraw1 = false
 
-                        if percentage <= 200 and percentage >= 100 then
+                        if percentage <= 200 and percentage > 100 then
                             draw.Color(0, 255, 0, 255) -- green
                             dodraw1 = true
                         elseif percentage >= 200 then
@@ -187,7 +187,7 @@ local function draw_handler()
                         end
                         if dodraw1 == true then draw.FilledRect(math.floor(boxX), math.floor(boxY + boxHeight), math.floor(boxX + boxWidth), math.floor(boxY + boxHeight + 7)) end
 
-                        if percentage <= 200 and percentage >= 100 then
+                        if percentage <= 200 and percentage > 100 then
                             draw.Color(0, 255, 255, 255)
                         elseif percentage >= 200 then
                             draw.Color(0, 255, 255, 255)
