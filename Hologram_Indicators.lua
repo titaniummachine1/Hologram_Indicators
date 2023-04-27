@@ -31,27 +31,27 @@ end
 
 local last_tick = globals.TickCount()
 local damage_queue = {}
-    
-    local function OnCreateMove()
-        local current_tick = globals.TickCount()
-        local tick_diff = current_tick - last_tick
-        if #damage_queue >= 66 then
-            table.remove(damage_queue, 1)
+
+local function OnCreateMove()
+    local current_tick = globals.TickCount()
+    local tick_diff = current_tick - last_tick
+    if #damage_queue >= 200 then
+        table.remove(damage_queue, 1)
+    end
+    if damage == nil then
+        damage = 0
+    end
+    table.insert(damage_queue, damage)
+    if tick_diff >= 1 then
+        last_tick = current_tick
+        local total_damage = 0
+        for _, dmg in ipairs(damage_queue) do
+            total_damage = total_damage + dmg
         end
-        if damage == nil then
-            damage = 0
-        end
-        table.insert(damage_queue, damage)
-        if tick_diff >= 1 then
-            last_tick = current_tick
-            local total_damage = 0
-            for _, dmg in ipairs(damage_queue) do
-                total_damage = total_damage + dmg
-            end
-            dps = total_damage / tick_diff
-            print("Current DPS: ", dps)
-        end
-        damage = 0 -- reset damage to 0 at the end of each call 
+        dps = total_damage / tick_diff
+        DPS = dps
+    end
+    damage = 0 -- reset damage to 0 at the end of each call
 end
 
 
