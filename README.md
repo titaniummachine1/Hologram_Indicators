@@ -8,7 +8,6 @@ draws indicators on players site with their information
 
 
 
-https://user-images.githubusercontent.com/78664175/234865975-62d0935c-664e-453e-94df-d87c7c9ee497.mp4
-
+https://user-images.githubusercontent.com/78664175/234868269-bfd83521-ca27-4d1b-bfb4-1164bab12152.mp4
 
 ![image](https://user-images.githubusercontent.com/78664175/234867889-c903b5ee-71d2-4885-aa39-9c7abdd7bde3.png)
